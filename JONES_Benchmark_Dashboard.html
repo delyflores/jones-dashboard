@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>JONES Compensation Benchmark Dashboard</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- SheetJS (Export to Excel) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fa;
+        padding: 20px;
+        color: #333;
+    }
+    h1 {
+        text-align: center;
+        color: #1a73e8;
+    }
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .search-box {
+        margin-bottom: 20px;
+    }
+    input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        margin-bottom: 25px;
+    }
+    th {
+        background: #1a73e8;
+        color: #fff;
+        padding: 10px;
+        text-align: left;
+    }
+    td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {
+        background: #f1f1f1;
+    }
+    #exportBtn {
+        background: #1a73e8;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        margin-bottom: 15px;
+    }
+</style>
+</head>
+
+<body>
+<div class="container">
+    <h1>JONES – Compensation Benchmark Dashboard</h1>
+
+    <div class="search-box">
+        <input 
+            type="text" 
+            id="searchInput" 
+            onkeyup="searchTable()" 
+            placeholder="Search roles, comparators, seniority..."
+        />
+    </div>
+
+    <button id="exportBtn" onclick="exportToExcel()">📥 Export to Excel</button>
+
+    <!-- TABLE -->
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Jones Role</th>
+                <th>Market Comparator</th>
+                <th>Local Mid (USD)</th>
+                <th>SaaS Adj %</th>
+                <th>Adjusted Mid</th>
+                <th>Suggested Range</th>
+                <th>Senior/Lead Range</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Tier 1 Agent</td><td>Technical Support L1</td><td>850</td><td>10</td><td>935</td><td>800–1000</td><td>—</td></tr>
+            <tr><td>Chat Agent</td><td>Customer Support Specialist (Chat)</td><td>800</td><td>10</td><td>880</td><td>780–1000</td><td>—</td></tr>
+            <tr><td>Tier 2 Agent</td><td>Technical Support L2</td><td>1150</td><td>15</td><td>1322</td><td>1200–1450</td><td>1500–1700</td></tr>
+            <tr><td>PMS Queue Agent</td><td>Technical Support L2–L3</td><td>1150</td><td>15</td><td>1320</td><td>1100–1400</td><td>1400–1600</td></tr>
+            <tr><td>Sensitive Queue Agent</td><td>Tech Support L3 / Compliance</td><td>1350</td><td>18</td><td>1593</td><td>1400–1750</td><td>1700–2000</td></tr>
+            <tr><td>New Live Accounts Agent</td><td>Onboarding Specialist</td><td>1200</td><td>15</td><td>1380</td><td>1300–1600</td><td>—</td></tr>
+            <tr><td>Jones Operator</td><td>Concierge / Senior Support</td><td>1600</td><td>20</td><td>1920</td><td>1600–2000</td><td>2000–2300</td></tr>
+            <tr><td>Senior Specialist (IC)</td><td>Senior Tech Support</td><td>1600</td><td>20</td><td>1920</td><td>1700–2200</td><td>2200–2600</td></tr>
+            <tr><td>Support Team Lead</td><td>SaaS Team Lead</td><td>2800</td><td>20</td><td>3360</td><td>3000–4000</td><td>4000–4500</td></tr>
+            <tr><td>Support Manager</td><td>Support Manager SaaS</td><td>4500</td><td>25</td><td>5625</td><td>5000–7000</td><td>7000–8500</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Charts -->
+    <h2 style="text-align:center; margin-top:40px;">📊 Salary Comparison</h2>
+    <canvas id="salaryChart" height="130"></canvas>
+
+    <h2 style="text-align:center; margin-top:40px;">🥧 SaaS Adjustment % by Role</h2>
+    <canvas id="adjustChart" height="130"></canvas>
+</div>
+
+<script>
+// SEARCH
+function searchTable() {
+    let input = document.getElementById("searchInput").value.toLowerCase();
+    let rows = document.querySelectorAll("#dataTable tbody tr");
+
+    rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(input) 
+            ? "" 
+            : "none";
+    });
+}
+
+// EXPORT TO EXCEL
+function exportToExcel() {
+    let table = document.getElementById("dataTable");
+    let wb = XLSX.utils.table_to_book(table);
+    XLSX.writeFile(wb, "JONES_Benchmark.xlsx");
+}
+
+// CHART DATA
+const rows = document.querySelectorAll("#dataTable tbody tr");
+let roles = [];
+let localMid = [];
+let adjustedMid = [];
+let adjPercent = [];
+
+rows.forEach(r => {
+    roles.push(r.children[0].innerText);
+    localMid.push(parseFloat(r.children[2].innerText));
+    adjPercent.push(parseFloat(r.children[3].innerText));
+    adjustedMid.push(parseFloat(r.children[4].innerText));
+});
+
+// CHART 1 – BAR
+new Chart(document.getElementById("salaryChart"), {
+    type: "bar",
+    data: {
+        labels: roles,
+        datasets: [
+            {
+                label: "Local Mid",
+                data: localMid,
+                backgroundColor: "#90caf9"
+            },
+            {
+                label: "Adjusted Mid (SaaS)",
+                data: adjustedMid,
+                backgroundColor: "#1a73e8"
+            }
+        ]
+    }
+});
+
+// CHART 2 – DONUT
+new Chart(document.getElementById("adjustChart"), {
+    type: "doughnut",
+    data: {
+        labels: roles,
+        datasets: [{
+            data: adjPercent,
+            backgroundColor: [
+                "#1a73e8","#42a5f5","#64b5f6","#90caf9",
+                "#0d47a1","#1565c0","#1976d2","#1e88e5",
+                "#2196f3","#64b5f6"
+            ]
+        }]
+    },
+    options: { cutout: "70%" }
+});
+</script>
+
+</body>
+</html>
